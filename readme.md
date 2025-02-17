@@ -24,7 +24,7 @@ The Ollama CLI tool is a simple command-line interface for generating responses 
 1. Clone the repository:
   
   ```sh
-   git clone https://github.com/FIX-ME-PLEASE
+   git clone https://github.com/ambitiousfew/goll.git
    cd goll
   ```
 
