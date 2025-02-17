@@ -62,5 +62,6 @@ There is a `settings.json` in the root that allows you to set some global defaul
   "folder_base_path": "prompts",
   "timeout": 300
 }
+```
 
 These are applied to every request.
