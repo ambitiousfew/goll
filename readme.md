@@ -53,6 +53,8 @@ Each folder should contain the following files:
 - `system.txt`: Sytem prompt.
 - `prompt.txt`: User prompt.
 
+Note:  `prompt.txt` is only required for the first folder in chain.  Each step will write to next folders `prompt.txt` file.
+
 Examples for each file can be found in `prompts` folder.  In general, the config.json fields match the Ollama generate API spec.
 
 ### Tool Settings
@@ -67,4 +69,6 @@ There is a `settings.json` in the root that allows you to set some global defaul
 }
 ```
 
-These are applied to every request.
+These are applied as globals and used in every step in chain.  
+
+`Timeout` is in seconds and is max time each step/request can take to the Ollama API before being closed.
