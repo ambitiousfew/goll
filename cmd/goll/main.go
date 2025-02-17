@@ -14,8 +14,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"goll/internal/ollama"
-	"goll/internal/toolconfig"
 	"net/http"
 	"os"
 	"os/signal"
@@ -24,6 +22,9 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/ambitiousfew/goll/internal/ollama"
+	"github.com/ambitiousfew/goll/internal/toolconfig"
 )
 
 func main() {
