@@ -1,18 +1,21 @@
-# Goll: Ollama CLI Tool
+# Goll
 
-ALPHA CODE! Needs more testing but the basics work.
+Goll is a simple command-line interface for chaining multiple prompts when using Ollama API.
 
-The Ollama CLI tool is a simple command-line interface for generating responses from the Ollama API. The tool reads model configuration files from specified folders, sends requests to the API, and prints the responses. It supports chaining multiple prompts by using the output of one prompt as the input for the next prompt.
+*This thing is highly experimental.* Needs more testing but the basics work.  Our testing will focus on chaining prompts using a mix of unstructured and structured prompts.  Also not sure how a local Ollama instance will perform when we potentially switch out relatively large models for each step in a chain on a resource constrained local server.
+
+## Background
+
+ We wanted a very simple CLI to enable us to break up more complex prompts into a pipeline of smaller, task oriented prompts using local Ollama. We also wanted to be able to easily adjust the model and it's settings for each prompt in the pipeline.  There appears to be plenty of UI's to support chat with custom callbacks etc.  Also projects like Fabric AI.  We just wanted something simple to use from command line focused on this use case.
+
+ Yes, naming is hard. `goll` is unique, short and easy to type.
 
 ## Features
 
-- Reads model configuration files from specified folders for each request.
-- Sends requests to the Ollama API to generate responses.
-- Supports chaining multiple prompts.
-- Specify a timeout to cancel requests if they take too long.
-- Handles OS signals to gracefully cancel requests on interrupt.
-- Prints responses and metrics such as tokens per second.
-- Logs the output file.
+- Supports simple chaining of multiple prompts.
+- Customize the model for each step in chain.
+- Prints and log each response with metrics such as tokens per second.
+- Solid support for structured/JSON output
 
 ## Prereqs
 
