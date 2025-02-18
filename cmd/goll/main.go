@@ -18,6 +18,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"syscall"
@@ -132,7 +133,12 @@ func run(settings toolconfig.Settings, folders []string) error {
 			nextFolder := folders[index+1]
 			nextFolderPath := filepath.Join(settings.FolderBase, nextFolder)
 			nextPromptFilePath := filepath.Join(nextFolderPath, "prompt.txt")
-			err = os.WriteFile(nextPromptFilePath, []byte(resp.Output), 0644)
+
+			// Remove content wrapped with <think></think> tags
+			re := regexp.MustCompile(`(?s)<think>.*?</think>`)
+			cleanedOutput := re.ReplaceAllString(resp.Output, "")
+
+			err = os.WriteFile(nextPromptFilePath, []byte(cleanedOutput), 0644)
 			if err != nil {
 				close(sigChan)
 				wg.Wait()

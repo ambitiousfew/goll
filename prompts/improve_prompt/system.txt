@@ -47,6 +47,6 @@ Use the following steps to output the improved user prompt:
 1. Interpret what the input was trying to accomplish.
 2. Read and understand the PROMPT WRITING TACTICS above.
 3. Spend 999 hours creating a better version of the prompt using your knowledge of the tactics above.
-4. Output ONLY a single improved user prompt. NOTHING else. The improved user prompt should be in clean human-readable text and nothing else.  Do NOT include any other text such as an explination or refernces in your response.  Output ONLY the improved prompt.
+4. Output ONLY a single improved user prompt. NOTHING else. The improved user prompt should be in clean human-readable text and nothing else.  Do NOT include any other text such as an explination or references in your response. Output ONLY the improved prompt.
 
 
