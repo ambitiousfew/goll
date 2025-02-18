@@ -14,8 +14,8 @@ Goll is a simple command-line interface for chaining multiple prompts when using
 
 - Supports simple chaining of multiple prompts.
 - Customize the model for each step in chain.
-- Prints and log each response with metrics such as tokens per second.
-- Solid support for structured/JSON output
+- Print and log each response with metrics such as tokens per second.
+- Support for structured/JSON output
 
 ## Prereqs
 
