@@ -1,5 +1,5 @@
 {
-  "model": "llama3.2",
+  "model": "deepseek-r1:8b",
   "options": {
     "temperature": 0.8,
     "num_ctx": 4096
