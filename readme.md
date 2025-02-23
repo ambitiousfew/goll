@@ -65,7 +65,7 @@ Each folder should contain the following files:
 
 Note:  `prompt.txt` is only required for the first folder in chain if you do not use the `-p` flag.  Each step will write to next folders `prompt.txt` file.
 
-Examples for each file can be found in `prompts` folder.  In general, the config.json fields match the Ollama generate API spec.
+Examples for each file can be found in `prompts` folder.  In general, the config.json fields match the Ollama generate API spec.  
 
 ### Tool Settings
 
@@ -82,3 +82,7 @@ There is a `settings.json` in the root that allows you to set some global defaul
 These are applied as globals and used in every step in chain.  
 
 `Timeout` is in seconds and is max time each step/request can take to the Ollama API before being closed.
+
+## Known Issues
+
+- Support for limited model options of `num_ctx`, `repeat_last_n`, `repeat_penalty`, `temperature` as it appears not all models support all options.

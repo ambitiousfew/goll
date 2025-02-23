@@ -178,12 +178,13 @@ func run(settings toolconfig.Settings, folders []string, firstPrompt string) err
 			"Response: %s\n\n"+
 				"Generated %d tokens in %.2f seconds\n"+
 				"Tokens per second: %.2f\n"+
-				"Using model config: %v\n",
+				"Using model config: %s\n",
 			resp.Output,
 			resp.EvalCount,
 			evalTime,
 			tps,
-			modelConfigJSON)
+			modelConfigJSON,
+		)
 		err = os.WriteFile(outputLogPath, []byte(outputLog), 0644)
 		if err != nil {
 			close(sigChan)

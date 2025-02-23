@@ -13,20 +13,22 @@ import (
 )
 
 // modelOptions struct contains the Ollama options for the model.
+// These are the options that can be set in the config.json file.
 type modelOptions struct {
-	Mirostat      int     `json:"mirostat,omitempty"`       // Enable Mirostat sampling for controlling perplexity. (default: 0, 0 = disabled, 1 = Mirostat, 2 = Mirostat 2.0)
-	MirostatEta   float64 `json:"mirostat_eta,omitempty"`   // Influences how quickly the algorithm responds to feedback from the generated text. (Default: 0.1)
-	MirostatTau   float64 `json:"mirostat_tau,omitempty"`   // Controls the balance between coherence and diversity of the output. (Default: 5.0)
-	NumCtx        int     `json:"num_ctx,omitempty"`        // Sets the size of the context window used to generate the next token. (Default: 2048)
-	RepeatLastN   int     `json:"repeat_last_n,omitempty"`  // Sets how far back for the model to look back to prevent repetition. (Default: 64, 0 = disabled, -1 = num_ctx)
-	RepeatPenalty float64 `json:"repeat_penalty,omitempty"` // Sets how strongly to penalize repetitions. (Default: 1.1)
-	Temperature   float64 `json:"temperature,omitempty"`    // The temperature of the model. (Default: 0.8)
-	Seed          int     `json:"seed,omitempty"`           // Sets the random number seed to use for generation. (Default: 0)
-	Stop          string  `json:"stop,omitempty"`           // Sets the stop sequences to use. (Default: "")
-	NumPredict    int     `json:"num_predict,omitempty"`    // Maximum number of tokens to predict when generating text. (Default: -1)
-	TopK          int     `json:"top_k,omitempty"`          // Reduces the probability of generating nonsense. (Default: 40)
-	TopP          float64 `json:"top_p,omitempty"`          // Works together with top-k. (Default: 0.9)
-	MinP          float64 `json:"min_p,omitempty"`          // Alternative to the top_p. (Default: 0.0)
+	NumCtx        int     `json:"num_ctx"`        // Sets the size of the context window used to generate the next token. (Default: 2048)
+	RepeatLastN   int     `json:"repeat_last_n"`  // Sets how far back for the model to look back to prevent repetition. (Default: 64, 0 = disabled, -1 = num_ctx)
+	RepeatPenalty float64 `json:"repeat_penalty"` // Sets how strongly to penalize repetitions. (Default: 1.1)
+	Temperature   float64 `json:"temperature"`    // The temperature of the model. (Default: 0.8)
+}
+
+// newModelOptions creates a modelOptions struct with default values.
+func newModelOptions() modelOptions {
+	return modelOptions{
+		NumCtx:        2048,
+		RepeatLastN:   64,
+		RepeatPenalty: 1.1,
+		Temperature:   0.8,
+	}
 }
 
 // ModelConfig struct contains the configuration for the model.
@@ -236,11 +238,11 @@ func config(path string) (ModelConfig, error) {
 		return empty, fmt.Errorf("error reading config.json: %w", err)
 	}
 
-	config := &ModelConfig{}
-	err = json.Unmarshal(configContent, config)
+	config := ModelConfig{Options: newModelOptions()}
+	err = json.Unmarshal(configContent, &config)
 	if err != nil {
 		return empty, fmt.Errorf("error unmarshalling config.json: %w", err)
 	}
 
-	return *config, nil
+	return config, nil
 }
