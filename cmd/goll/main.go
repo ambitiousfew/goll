@@ -31,6 +31,7 @@ import (
 func main() {
 	// Define and parse command-line flags
 	folder := flag.String("f", "", "One or more comma seperated folder names.")
+	firstPrompt := flag.String("p", "", "Optional.  Initial prompt text to use instead of reading from prompt.txt file.")
 	flag.Parse()
 
 	// Ensure at least one folder name is provided
@@ -66,7 +67,7 @@ func main() {
 	}
 
 	// Run the tool for each folder
-	err = run(settings, folders)
+	err = run(settings, folders, *firstPrompt)
 	if err != nil {
 		fmt.Println("Error running goll: ", err)
 		os.Exit(1)
@@ -75,7 +76,7 @@ func main() {
 }
 
 // run function generates a response for each folder in the folders slice.
-func run(settings toolconfig.Settings, folders []string) error {
+func run(settings toolconfig.Settings, folders []string, firstPrompt string) error {
 
 	// Loop through each folder and generate a response
 	for index, folder := range folders {
@@ -98,16 +99,29 @@ func run(settings toolconfig.Settings, folders []string) error {
 			}
 		}()
 
+		// If firstPrompt is provided, set the prompt text for first folder
+		// Generate will ignore empty prompt text and use prompt.txt file
+		var prompt string
+		if index == 0 && firstPrompt != "" {
+			prompt = firstPrompt
+		}
+
 		// Create a new ollama generate instance
-		gen := ollama.NewGenerate(
+		gen, err := ollama.NewGenerate(
 			folder,
+			ollama.WithPrompt(prompt),
 			ollama.WithAPIBase(settings.APIBase),
 			ollama.WithFolderBase(settings.FolderBase),
 			ollama.WithClient(http.Client{}),
 			ollama.WithTimeout(settings.Timeout),
 		)
+		if err != nil {
+			close(sigChan)
+			wg.Wait()
+			return fmt.Errorf("error creating generate instance: %v", err)
+		}
 
-		fmt.Printf("Generating response using folder: %s\n", folder)
+		fmt.Printf("Generating response using folder: %s\n With Model Config: %v\n", folder, gen.Config())
 		// Print a spinner while waiting for the response
 		go spinner(ctx)
 

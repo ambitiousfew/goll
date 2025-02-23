@@ -21,6 +21,7 @@ Goll is a simple command-line interface for chaining multiple prompts when using
 
 - Go v1.23 or greater installed.
 - Access to an Ollama API.  Currently tested on a local instance and only uses `generate` endpoint.
+- Ensure you have pulled whatever Ollama models you reference in your config.  
 
 ## Installation
 

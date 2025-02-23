@@ -1,7 +1,7 @@
 {
-  "model": "deepseek-r1:8b",
+  "model": "deepseek-r1:14b",
   "options": {
-    "temperature": 0.8,
+    "temperature": 1.0,
     "num_ctx": 4096
   }
 }

@@ -30,7 +30,7 @@ type modelOptions struct {
 }
 
 // modelConfig struct contains the configuration for the Generate struct.
-type modelConfig struct {
+type ModelConfig struct {
 	Model        string       `json:"model"`
 	Options      modelOptions `json:"options"`
 	OutputFormat string       `json:"format"` // Optional. If this is set to "json" make sure the prompt instructs the agent to ouput json.
@@ -65,31 +65,53 @@ type Response struct {
 // Generate is a struct that contains the configuration for the Generate struct.
 // It also contains the HTTP client, API base URL, and folder base path.
 type Generate struct {
-	folder     string
-	client     http.Client
-	apiBase    string
-	folderBase string
-	timeout    time.Duration
+	folder      string        // folder name
+	prompt      string        // optional initial prompt text
+	modelConfig ModelConfig   // model configuration
+	client      http.Client   // HTTP client
+	apiBase     string        // API base URL
+	folderBase  string        // folder base path
+	timeout     time.Duration // timeout for the request
 }
 
 // Option is a function that takes a pointer to a Generate struct and modifies it
 type Option func(*Generate)
 
 // NewGenerate creates a new Generate struct with the given request and options
-func NewGenerate(folder string, options ...Option) Generate {
+func NewGenerate(folder string, options ...Option) (Generate, error) {
 	g := Generate{
-		folder:     folder,
-		client:     http.Client{},
-		apiBase:    "http://localhost:11434/api",
-		folderBase: "prompts",
-		timeout:    300 * time.Second,
+		folder:      folder,
+		prompt:      "",
+		modelConfig: ModelConfig{},
+		client:      http.Client{},
+		apiBase:     "",
+		folderBase:  "",
+		timeout:     300 * time.Second,
 	}
 
 	for _, opt := range options {
 		opt(&g)
 	}
 
-	return g
+	if g.apiBase == "" {
+		return g, fmt.Errorf("API base URL is required")
+	}
+
+	// Set the modelConfig from the config.json file
+	configDirPath := filepath.Join(g.folderBase, g.folder)
+	config, err := config(configDirPath)
+	if err == nil {
+		g.modelConfig = config
+	}
+
+	return g, nil
+}
+
+// WithPrompt sets the prompt for the Generate struct
+func WithPrompt(prompt string) Option {
+	return func(g *Generate) {
+		g.prompt = prompt
+	}
 }
 
 // WithClient sets the HTTP client for the Generate struct
@@ -120,32 +142,14 @@ func WithTimeout(timeout int) Option {
 	}
 }
 
-// config reads the config.json file and returns a modelConfig struct or an error
-func (g *Generate) config() (modelConfig, error) {
-	empty := modelConfig{}
-	// Read the config.json file and unmarshal it into a modelConfig struct
-	configContent, err := os.ReadFile(filepath.Join(g.folderBase, g.folder, "config.json"))
-	if err != nil {
-		return empty, fmt.Errorf("error reading config.json: %w", err)
-	}
-
-	config := &modelConfig{}
-	err = json.Unmarshal(configContent, config)
-	if err != nil {
-		return empty, fmt.Errorf("error unmarshalling config.json: %w", err)
-	}
-
-	return *config, nil
+// Config gets the value of modelConfig from the Generate struct
+func (g *Generate) Config() ModelConfig {
+	return g.modelConfig
 }
 
 // requestFromFolder reads config.json, system.txt, and prompt.txt files from the folder and returns a request struct or an error
 func (g *Generate) requestFromFolder() (request, error) {
 	empty := request{}
-	// Get the modelConfig from the config.json file
-	config, err := g.config()
-	if err != nil {
-		return empty, fmt.Errorf("error reading config.json: %w", err)
-	}
 
 	// Read the system.txt file
 	systemContent, err := os.ReadFile(filepath.Join(g.folderBase, g.folder, "system.txt"))
@@ -153,19 +157,23 @@ func (g *Generate) requestFromFolder() (request, error) {
 		return empty, fmt.Errorf("error reading system.txt: %w", err)
 	}
 
-	// Read the prompt.txt file
-	promptContent, err := os.ReadFile(filepath.Join(g.folderBase, g.folder, "prompt.txt"))
-	if err != nil {
-		return empty, fmt.Errorf("error reading prompt.txt: %w", err)
+	// If we have a prompt, use it
+	promptContent := []byte(g.prompt)
+	if promptContent == nil {
+		// Read the prompt.txt file
+		promptContent, err = os.ReadFile(filepath.Join(g.folderBase, g.folder, "prompt.txt"))
+		if err != nil {
+			return empty, fmt.Errorf("error reading prompt.txt: %w", err)
+		}
 	}
 
 	return request{
-		Model:   config.Model,
-		Options: config.Options,
+		Model:   g.modelConfig.Model,
+		Options: g.modelConfig.Options,
 		Prompt:  string(promptContent),
 		Stream:  false,
 		System:  string(systemContent),
-		Format:  config.OutputFormat,
+		Format:  g.modelConfig.OutputFormat,
 		Raw:     false,
 	}, nil
 }
@@ -216,4 +224,22 @@ func (g *Generate) Post(ctx context.Context) (Response, error) {
 	}
 
 	return response, nil
+}
+
+// config reads the config.json file and returns a modelConfig struct or an error
+func config(path string) (ModelConfig, error) {
+	empty := ModelConfig{}
+	// Read the config.json file and unmarshal it into a modelConfig struct
+	configContent, err := os.ReadFile(filepath.Join(path, "config.json"))
+	if err != nil {
+		return empty, fmt.Errorf("error reading config.json: %w", err)
+	}
+
+	config := &ModelConfig{}
+	err = json.Unmarshal(configContent, config)
+	if err != nil {
+		return empty, fmt.Errorf("error unmarshalling config.json: %w", err)
+	}
+
+	return *config, nil
 }
