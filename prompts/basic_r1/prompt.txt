@@ -1,3 +1,0 @@
-
-
-"Create a detailed Chart of Accounts for a freelance software development business. The chart should include income streams such as project fees, consulting services, product sales, and any other relevant revenue sources. Include expense categories like software licenses, hardware costs, professional services, marketing expenses, office supplies, and other operational costs. Format the chart in Excel or Google Sheets with clear headings for each account, appropriate formulas for balances, and sub-accounts where necessary. The chart should cover at least one full financial year and be organized into sections for income, expenses, assets, liabilities, and equity."

@@ -4,3 +4,8 @@
 # Ignore goll binary
 goll
 
+# ignore main binary
+main
+
+# Ignore log files
+*.log

@@ -29,7 +29,7 @@ type modelOptions struct {
 	MinP          float64 `json:"min_p,omitempty"`          // Alternative to the top_p. (Default: 0.0)
 }
 
-// modelConfig struct contains the configuration for the Generate struct.
+// ModelConfig struct contains the configuration for the model.
 type ModelConfig struct {
 	Model        string       `json:"model"`
 	Options      modelOptions `json:"options"`
@@ -152,27 +152,28 @@ func (g *Generate) requestFromFolder() (request, error) {
 	empty := request{}
 
 	// Read the system.txt file
-	systemContent, err := os.ReadFile(filepath.Join(g.folderBase, g.folder, "system.txt"))
+	systemPromptFromFile, err := os.ReadFile(filepath.Join(g.folderBase, g.folder, "system.txt"))
 	if err != nil {
 		return empty, fmt.Errorf("error reading system.txt: %w", err)
 	}
+	systemPromptContent := string(systemPromptFromFile)
 
-	// If we have a prompt, use it
-	promptContent := []byte(g.prompt)
-	if promptContent == nil {
-		// Read the prompt.txt file
-		promptContent, err = os.ReadFile(filepath.Join(g.folderBase, g.folder, "prompt.txt"))
+	// If we have a prompt, use it. Otherwise, read the prompt.txt file
+	promptContent := g.prompt
+	if promptContent == "" {
+		promptFromFile, err := os.ReadFile(filepath.Join(g.folderBase, g.folder, "prompt.txt"))
 		if err != nil {
 			return empty, fmt.Errorf("error reading prompt.txt: %w", err)
 		}
+		promptContent = string(promptFromFile)
 	}
 
 	return request{
 		Model:   g.modelConfig.Model,
 		Options: g.modelConfig.Options,
-		Prompt:  string(promptContent),
+		Prompt:  promptContent,
 		Stream:  false,
-		System:  string(systemContent),
+		System:  systemPromptContent,
 		Format:  g.modelConfig.OutputFormat,
 		Raw:     false,
 	}, nil

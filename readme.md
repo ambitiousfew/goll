@@ -41,10 +41,19 @@ Goll is a simple command-line interface for chaining multiple prompts when using
 ## Usage
 
   ```sh
-  ./goll -f folder1,folder2,folder3
+  ./goll -f folder1,folder2,folder3 -p "optional beginning prompt"
   ```
 
 - `-f`: Comma-separated list of folder names.  You have to provide at least one folder.
+- `-p`: Optional text prompt.  Applied to first folder in chain.  If not present we expext a prompt.txt in first folder.
+
+### Example
+
+```sh
+  ./goll -f improve_prompt,basic -p "why is the sky blue"
+```
+
+- Starts with improving the prompt provided with the `-p` flag and passes the improved prompt to the basic folder.  If we did not use `-p` flag here we would expect prompt.txt in the improve_prompt folder to read "why is the sky blue".
 
 ## Configuration
 
@@ -54,7 +63,7 @@ Each folder should contain the following files:
 - `system.txt`: Sytem prompt.
 - `prompt.txt`: User prompt.
 
-Note:  `prompt.txt` is only required for the first folder in chain.  Each step will write to next folders `prompt.txt` file.
+Note:  `prompt.txt` is only required for the first folder in chain if you do not use the `-p` flag.  Each step will write to next folders `prompt.txt` file.
 
 Examples for each file can be found in `prompts` folder.  In general, the config.json fields match the Ollama generate API spec.
 

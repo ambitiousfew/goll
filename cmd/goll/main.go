@@ -61,7 +61,7 @@ func main() {
 	for _, folder := range folders {
 		folderPath := filepath.Join(settings.FolderBase, folder)
 		if _, err := os.Stat(folderPath); os.IsNotExist(err) {
-			fmt.Printf("Error: Folder %s does not exist in %s\n", folder, settings.FolderBase)
+			fmt.Printf("Error: Folder %s does not exist in %s\n", folderPath, settings.FolderBase)
 			os.Exit(1)
 		}
 	}
@@ -121,7 +121,17 @@ func run(settings toolconfig.Settings, folders []string, firstPrompt string) err
 			return fmt.Errorf("error creating generate instance: %v", err)
 		}
 
-		fmt.Printf("Generating response using folder: %s\n With Model Config: %v\n", folder, gen.Config())
+		modelConfig := gen.Config()
+
+		// Pretty print modelConfig
+		modelConfigJSON, err := json.MarshalIndent(modelConfig, "", "  ")
+		if err != nil {
+			close(sigChan)
+			wg.Wait()
+			return fmt.Errorf("error marshalling modelConfig: %v", err)
+		}
+
+		fmt.Printf("Generating response using folder: %s\n  With Model Config: %v\n", folder, string(modelConfigJSON))
 		// Print a spinner while waiting for the response
 		go spinner(ctx)
 
@@ -162,8 +172,18 @@ func run(settings toolconfig.Settings, folders []string, firstPrompt string) err
 		}
 
 		// Write to output.log file
-		outputLogPath := filepath.Join(settings.FolderBase, folder, "output.log")
-		outputLog := fmt.Sprintf("Response: %s\n\nTokens per second: %.2f\n", resp.Output, tps)
+		outputLogFileName := fmt.Sprintf("output_%s.log", time.Now().Format("2006-01-02_15-04-05"))
+		outputLogPath := filepath.Join(settings.FolderBase, folder, outputLogFileName)
+		outputLog := fmt.Sprintf(
+			"Response: %s\n\n"+
+				"Generated %d tokens in %.2f seconds\n"+
+				"Tokens per second: %.2f\n"+
+				"Using model config: %v\n",
+			resp.Output,
+			resp.EvalCount,
+			evalTime,
+			tps,
+			modelConfigJSON)
 		err = os.WriteFile(outputLogPath, []byte(outputLog), 0644)
 		if err != nil {
 			close(sigChan)
