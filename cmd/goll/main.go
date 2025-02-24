@@ -28,10 +28,17 @@ import (
 	"github.com/ambitiousfew/goll/internal/toolconfig"
 )
 
+type args struct {
+	folders []string
+	prompt  string
+	verbose bool
+}
+
 func main() {
 	// Define and parse command-line flags
 	folder := flag.String("f", "", "One or more comma seperated folder names.")
-	firstPrompt := flag.String("p", "", "Optional.  Initial prompt text to use instead of reading from prompt.txt file.")
+	prompt := flag.String("p", "", "Optional.  Initial prompt text to use instead of reading from prompt.txt file.")
+	verbose := flag.Bool("v", false, "Optional. Print output to stdout.")
 	flag.Parse()
 
 	// Ensure at least one folder name is provided
@@ -66,8 +73,14 @@ func main() {
 		}
 	}
 
+	args := args{
+		folders: folders,
+		prompt:  *prompt,
+		verbose: *verbose,
+	}
+
 	// Run the tool for each folder
-	err = run(settings, folders, *firstPrompt)
+	err = run(settings, args)
 	if err != nil {
 		fmt.Println("Error running goll: ", err)
 		os.Exit(1)
@@ -76,10 +89,10 @@ func main() {
 }
 
 // run function generates a response for each folder in the folders slice.
-func run(settings toolconfig.Settings, folders []string, firstPrompt string) error {
+func run(settings toolconfig.Settings, args args) error {
 
 	// Loop through each folder and generate a response
-	for index, folder := range folders {
+	for index, folder := range args.folders {
 		// Create a context
 		// Signal worker is in charge of cancelling the context
 		ctx, cancel := context.WithCancel(context.Background())
@@ -102,8 +115,8 @@ func run(settings toolconfig.Settings, folders []string, firstPrompt string) err
 		// If firstPrompt is provided, set the prompt text for first folder
 		// Generate will ignore empty prompt text and use prompt.txt file
 		var prompt string
-		if index == 0 && firstPrompt != "" {
-			prompt = firstPrompt
+		if index == 0 && args.prompt != "" {
+			prompt = args.prompt
 		}
 
 		// Create a new ollama generate instance
@@ -131,9 +144,11 @@ func run(settings toolconfig.Settings, folders []string, firstPrompt string) err
 			return fmt.Errorf("error marshalling modelConfig: %v", err)
 		}
 
-		fmt.Printf("Generating response using folder: %s\n  With Model Config: %v\n", folder, string(modelConfigJSON))
-		// Print a spinner while waiting for the response
-		go spinner(ctx)
+		if args.verbose {
+			fmt.Printf("Generating response using folder: %s\n  With Model Config: %v\n", folder, string(modelConfigJSON))
+			// Print a spinner while waiting for the response
+			go spinner(ctx)
+		}
 
 		// Send the request to the ollama generate API
 		resp, err := gen.Post(ctx)
@@ -147,14 +162,17 @@ func run(settings toolconfig.Settings, folders []string, firstPrompt string) err
 		evalTime := float64(resp.EvalDuration) / 1e9
 		// Compute tokens per second
 		tps := float64(resp.EvalCount) / evalTime
-		// Print the response and metrics
-		fmt.Printf("\n\nResponse: %s", resp.Output)
-		fmt.Printf("\n\nGenerated %d tokens in %.2f seconds", resp.EvalCount, evalTime)
-		fmt.Printf("\nTokens per second: %.2f\n", tps)
+
+		if args.verbose {
+			// Print the response and metrics
+			fmt.Printf("\n\nResponse: %s", resp.Output)
+			fmt.Printf("\n\nGenerated %d tokens in %.2f seconds", resp.EvalCount, evalTime)
+			fmt.Printf("\nTokens per second: %.2f\n", tps)
+		}
 
 		// If there is a next folder, write the response to prompt.txt file in the next folder
-		if index < len(folders)-1 {
-			nextFolder := folders[index+1]
+		if index < len(args.folders)-1 {
+			nextFolder := args.folders[index+1]
 			nextFolderPath := filepath.Join(settings.FolderBase, nextFolder)
 			nextPromptFilePath := filepath.Join(nextFolderPath, "prompt.txt")
 
@@ -168,7 +186,9 @@ func run(settings toolconfig.Settings, folders []string, firstPrompt string) err
 				wg.Wait()
 				return fmt.Errorf("error writing prompt.txt: %v", err)
 			}
-			fmt.Printf("Response written to %s\n", nextPromptFilePath)
+			if args.verbose {
+				fmt.Printf("Response written to %s\n", nextPromptFilePath)
+			}
 		}
 
 		// Write to output_date_time.log file

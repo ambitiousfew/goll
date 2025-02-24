@@ -39,11 +39,12 @@ Yes, naming is hard. `goll` is unique, short and easy to type.
 ## Usage
 
   ```sh
-  ./goll -f folder1,folder2,folder3 -p "optional beginning prompt"
+  ./goll -f folder1,folder2,folder3 -p "optional beginning prompt" -v
   ```
 
 - `-f`: Comma-separated list of folder names.  You have to provide at least one folder.
 - `-p`: Optional text prompt.  Applied to first folder in chain.  If not present we expext a prompt.txt in first folder.
+- `-v`: Optional verbose output. Print results of each step to command line.
 
 ### Example
 
