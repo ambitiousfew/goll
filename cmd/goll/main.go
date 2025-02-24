@@ -171,7 +171,7 @@ func run(settings toolconfig.Settings, folders []string, firstPrompt string) err
 			fmt.Printf("Response written to %s\n", nextPromptFilePath)
 		}
 
-		// Write to output.log file
+		// Write to output_date_time.log file
 		outputLogFileName := fmt.Sprintf("output_%s.log", time.Now().Format("2006-01-02_15-04-05"))
 		outputLogPath := filepath.Join(settings.FolderBase, folder, outputLogFileName)
 		outputLog := fmt.Sprintf(

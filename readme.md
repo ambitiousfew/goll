@@ -1,14 +1,12 @@
 # Goll
 
-Goll is a simple command-line interface for chaining multiple prompts when using Ollama API.
+Goll is a simple command-line interface for customizing prompts and chaining multiple prompts when using a local Ollama API.
 
-*This thing is highly experimental.* Needs more testing but the basics work.  Our testing will focus on chaining prompts using a mix of unstructured and structured prompts.  Also not sure how a local Ollama instance will perform when we potentially switch out relatively large models for each step in a chain on a resource constrained local server.
+Yes, naming is hard. `goll` is unique, short and easy to type.
 
 ## Background
 
- We wanted a very simple CLI to enable us to break up more complex prompts into a pipeline of smaller, task oriented prompts using local Ollama. We also wanted to be able to easily adjust the model and it's settings for each prompt in the pipeline.  There appears to be plenty of UI's to support chat with custom callbacks etc.  Also projects like Fabric AI.  We just wanted something simple to use from command line focused on this use case.
-
- Yes, naming is hard. `goll` is unique, short and easy to type.
+ We wanted a *very simple* CLI to enable us to break up more complex prompts into a pipeline of smaller, task oriented prompts using local Ollama. We also wanted to be able to easily adjust the model and it's settings for each prompt in the pipeline.
 
 ## Features
 
@@ -54,6 +52,7 @@ Goll is a simple command-line interface for chaining multiple prompts when using
 ```
 
 - Starts with improving the prompt provided with the `-p` flag and passes the improved prompt to the basic folder.  If we did not use `-p` flag here we would expect prompt.txt in the improve_prompt folder to read "why is the sky blue".
+- Each step will generate an output log with date/time appended.
 
 ## Configuration
 
@@ -65,7 +64,7 @@ Each folder should contain the following files:
 
 Note:  `prompt.txt` is only required for the first folder in chain if you do not use the `-p` flag.  Each step will write to next folders `prompt.txt` file.
 
-Examples for each file can be found in `prompts` folder.  In general, the config.json fields match the Ollama generate API spec.  
+Examples for each file can be found in `prompts` folder.  In general, the config.json fields match the Ollama generate API spec.
 
 ### Tool Settings
 
@@ -79,10 +78,26 @@ There is a `settings.json` in the root that allows you to set some global defaul
 }
 ```
 
-These are applied as globals and used in every step in chain.  
+These are applied in every step in chain.  
 
 `Timeout` is in seconds and is max time each step/request can take to the Ollama API before being closed.
 
-## Known Issues
+## Known Issues\Limitations
 
-- Support for limited model options of `num_ctx`, `repeat_last_n`, `repeat_penalty`, `temperature` as it appears not all models support all options.
+- Some settings might be better in per prompt config.  Settings such as `api_base_url` and `timeout` might be better served in each prompt's config.json.  This would allow for more flexibility.  Current approach works but might be too simple for some.
+- `<think></think>` tags and enclosed content are automatically removed when passing prompt.  Might be better to make this an option rather than force removal for each prompt.
+- Support for limited model options of `num_ctx`, `repeat_last_n`, `repeat_penalty`, and `temperature` in `config.json` as it appears not all models support all options.
+
+## Notes
+
+- Running tests on MacBook Pro M3 with 12/18 cores and 32GB RAM
+- Using Ollama latest
+- `llama3.2:latest`: ~50 tokens per second
+- `deepseek-r1:8b`: ~24 tokens per second
+- `deepseek-r1:14b`: ~12 tokens per second
+
+## More Options
+
+- If you need broader support for more than local Ollama, and great community prompts: Fabric AI https://github.com/danielmiessler/fabric
+- Chatbox is a pretty cool UI that allows simple model config tweaks and custom system prompts. https://github.com/Bin-Huang/chatbox
+- Open WebUI is a powerful self hosted UI that can do everything goll does plus much more. https://github.com/open-webui/open-webui
