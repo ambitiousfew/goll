@@ -50,6 +50,9 @@ func main() {
 
 	// Split the folder flag by comma
 	folders := strings.Split(*folder, ",")
+	for i, folder := range folders {
+		folders[i] = strings.TrimSpace(folder)
+	}
 
 	// Read in settings from the settings.json file
 	settingsContent, err := os.ReadFile("settings.json")
