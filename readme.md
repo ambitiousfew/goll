@@ -44,9 +44,10 @@ Yes, naming is hard. `goll` is unique, short and easy to type.
   ```
 
 - `-f`: Comma-separated list of folder names.  You have to provide at least one folder.
-- `-p`: Optional text prompt.  Applied to first folder in chain.  If not present we expext a prompt.txt in first folder.
-- `-v`: Optional verbose output. Print results of each step to command line.
+- `-p`: Optional text prompt.  Applied to first folder in chain or all subfolders if -r is used.  If not present we expect a prompt.txt in first folder of a chain or in all subfolders if -r is used.
 - `-r`: Optional recurse of folder. If used only one folder can be set with -f flag.  Will iterate each subfolder in the given folder.  Only one level supported."
+- `-v`: Optional verbose output. Print results of each step to command line.
+
 
 ### Chaining Example With Prompt Flag
 
