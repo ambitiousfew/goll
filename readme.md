@@ -48,7 +48,6 @@ Yes, naming is hard. `goll` is unique, short and easy to type.
 - `-r`: Optional recurse of folder. If used only one folder can be set with -f flag.  Will iterate each subfolder in the given folder.  Only one level supported."
 - `-v`: Optional verbose output. Print results of each step to command line.
 
-
 ### Chaining Example With Prompt Flag
 
 ```sh
