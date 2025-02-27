@@ -1,0 +1,7 @@
+{
+  "model": "phi4",
+  "options": {
+    "temperature": 0.8,
+    "num_ctx": 4096
+  }
+}
