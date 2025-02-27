@@ -165,6 +165,8 @@ func run(settings tool.Settings, args args) error {
 		folderBase := settings.FolderBase
 		if args.recurse && args.prompt != "" {
 			prompt = args.prompt
+		}
+		if args.recurse {
 			// subfolders will be in the format: folderBase/parentFolder/subfolder
 			folderBase = ""
 		}
