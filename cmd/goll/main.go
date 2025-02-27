@@ -24,7 +24,7 @@ import (
 	"time"
 
 	"github.com/ambitiousfew/goll/internal/ollama"
-	"github.com/ambitiousfew/goll/internal/toolconfig"
+	"github.com/ambitiousfew/goll/internal/tool"
 )
 
 type args struct {
@@ -73,7 +73,7 @@ func main() {
 		fmt.Printf("Error reading settings.json: %v\n", err)
 		os.Exit(1)
 	}
-	settings := toolconfig.Settings{}
+	settings := tool.Settings{}
 	err = json.Unmarshal(settingsContent, &settings)
 	if err != nil {
 		fmt.Printf("Error unmarshalling settings.json: %v\n", err)
@@ -127,7 +127,7 @@ func main() {
 }
 
 // run function generates a response for each folder in the folders slice.
-func run(settings toolconfig.Settings, args args) error {
+func run(settings tool.Settings, args args) error {
 
 	// Create a context
 	// Signal worker is in charge of cancelling the context
