@@ -150,6 +150,11 @@ func (g *Generate) Config() ModelConfig {
 	return g.modelConfig
 }
 
+// Prompt gets the value of prompt from the Generate struct
+func (g *Generate) Prompt() string {
+	return g.prompt
+}
+
 // requestFromFolder reads config.json, system.txt, and prompt.txt files from the folder and returns a request struct or an error
 func (g *Generate) requestFromFolder() (request, error) {
 	empty := request{}
