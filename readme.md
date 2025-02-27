@@ -111,6 +111,6 @@ These are applied in every step in chain.
 
 ## More Options
 
-- If you need broader support for more than local Ollama, and great community prompts: Fabric AI https://github.com/danielmiessler/fabric
-- Chatbox is a pretty cool UI that allows simple model config tweaks and custom system prompts. https://github.com/Bin-Huang/chatbox
-- Open WebUI is a powerful self hosted UI that can do everything goll does plus much more. https://github.com/open-webui/open-webui
+- If you need broader support for more than local Ollama, and great community prompts: Fabric AI <https://github.com/danielmiessler/fabric>
+- Chatbox is a pretty cool UI that allows simple model config tweaks and custom system prompts. <https://github.com/Bin-Huang/chatbox>
+- Open WebUI is a powerful self hosted UI that can do everything goll does plus much more. <https://github.com/open-webui/open-webui>
