@@ -1,4 +1,4 @@
-// package tool contains the Settings struct that is used to store the global settings for goll.
+// Package tool contains the Settings struct that is used to store the global settings for goll.
 package tool
 
 // Settings struct contains the global settings for goll.
