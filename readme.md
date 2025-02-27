@@ -1,6 +1,6 @@
 # Goll
 
-Goll is a simple command-line interface for customizing prompts and chaining multiple prompts when using a local Ollama API.
+Goll is a simple command-line interface for customizing prompts, iterating over multiple prompts, and chaining multiple prompts when using a local Ollama API.
 
 Yes, naming is hard. `goll` is unique, short and easy to type.
 
@@ -10,6 +10,7 @@ Yes, naming is hard. `goll` is unique, short and easy to type.
 
 ## Features
 
+- Support iteration of subfolder prompts in a folder.
 - Supports simple chaining of multiple prompts.
 - Customize the model for each step in chain.
 - Print and log each response with metrics such as tokens per second.
@@ -45,14 +46,25 @@ Yes, naming is hard. `goll` is unique, short and easy to type.
 - `-f`: Comma-separated list of folder names.  You have to provide at least one folder.
 - `-p`: Optional text prompt.  Applied to first folder in chain.  If not present we expext a prompt.txt in first folder.
 - `-v`: Optional verbose output. Print results of each step to command line.
+- `-r`: Optional recurse of folder. If used only one folder can be set with -f flag.  Will iterate each subfolder in the given folder.  Only one level supported."
 
-### Example
+### Chaining Example With Prompt Flag
 
 ```sh
   ./goll -f improve_prompt,basic -p "why is the sky blue"
 ```
 
 - Starts with improving the prompt provided with the `-p` flag and passes the improved prompt to the basic folder.  If we did not use `-p` flag here we would expect prompt.txt in the improve_prompt folder to read "why is the sky blue".
+- Each step will generate an output log with date/time appended.
+
+### Recursion Example
+
+```sh
+  ./goll -f improve_prompt_test -r -p "why is the sky blue"
+```
+
+- Iterates over the `improve_prompt_test` folder and calls generate on each subfolder.  If we did not use `-p` flag here we would expect prompt.txt in each subfolder.
+- No chaining supported.
 - Each step will generate an output log with date/time appended.
 
 ## Configuration
@@ -63,7 +75,7 @@ Each folder should contain the following files:
 - `system.txt`: Sytem prompt.
 - `prompt.txt`: User prompt.
 
-Note:  `prompt.txt` is only required for the first folder in chain if you do not use the `-p` flag.  Each step will write to next folders `prompt.txt` file.
+Note:  If chaining, `prompt.txt` is only required for the first folder in chain if you do not use the `-p` flag.  Each step will write to the next folders `prompt.txt` file.  If calling each folder recursively with -r flag then you can either pass the same prompt to each subfolder with the `-p` flag or you need to provide a `prompt.txt` in each subfolder being called.
 
 Examples for each file can be found in `prompts` folder.  In general, the config.json fields match the Ollama generate API spec.
 
