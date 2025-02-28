@@ -1,6 +1,12 @@
 # Goll
 
-Goll is a simple command-line interface for customizing prompts, iterating over multiple prompts, and chaining multiple prompts when using a local Ollama API.
+Goll is a lightweight command-line interface (CLI) that streamlines your interaction with a local Ollama API. With Goll, you can:
+
+* Customize your terminal prompts in one place
+* Easily iterate over multiple prompts to save time and reduce errors
+* Chain multiple prompts for seamless workflow automation
+
+By automating these common tasks, Goll aims to make your local Ollama CLI experience more efficient and enjoyable.
 
 Yes, naming is hard. `goll` is unique, short and easy to type.
 
