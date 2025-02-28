@@ -36,21 +36,21 @@ type args struct {
 }
 
 func main() {
-	// Define and parse command-line flags
+	// Define and parse command-line flags.
 	folder := flag.String("f", "", "One or more comma seperated folder names. Limit one parnet folder if using with -r flag")
 	prompt := flag.String("p", "", "Optional.  Initial prompt text to use instead of reading from prompt.txt file.")
 	verbose := flag.Bool("v", false, "Optional. Print output to stdout.")
 	recurse := flag.Bool("r", false, "Optional. Recurse through subfolders. If set -f can only have one folder.")
 	flag.Parse()
 
-	// Ensure at least one folder name is provided
+	// Ensure at least one folder name is provided.
 	if *folder == "" {
 		fmt.Println("Error: At least one folder is required")
 		flag.Usage()
 		os.Exit(1)
 	}
 
-	// Split the folder flag by comma and clean whitespace
+	// Split the folder flag by comma and clean whitespace.
 	rawFolders := strings.Split(*folder, ",")
 	folders := make([]string, 0, len(rawFolders))
 	for _, rawFolder := range rawFolders {
@@ -60,14 +60,14 @@ func main() {
 		}
 	}
 
-	// Chekc if -r flag is set and only one folder is provided
+	// Chekc if -r flag is set and only one folder is provided.
 	if *recurse && len(folders) > 1 {
 		fmt.Println("Error: -r flag can only be used with one folder")
 		flag.Usage()
 		os.Exit(1)
 	}
 
-	// Read in settings from the settings.json file
+	// Read in settings from the settings.json file.
 	settingsContent, err := os.ReadFile("settings.json")
 	if err != nil {
 		fmt.Printf("Error reading settings.json: %v\n", err)
@@ -80,7 +80,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Ensure each folder exists in the folder_base_path
+	// Ensure each folder exists in the folder_base_path.
 	for _, folder := range folders {
 		folderPath := filepath.Join(settings.FolderBase, folder)
 		if _, err := os.Stat(folderPath); os.IsNotExist(err) {
@@ -89,7 +89,7 @@ func main() {
 		}
 	}
 
-	// If recurse flag is set, get all subfolders of the parent folder to pass as folders
+	// If recurse flag is set, get all subfolders of the parent folder to pass as folders.
 	if *recurse {
 		parentFolder := filepath.Join(settings.FolderBase, folders[0])
 		var subfolders []string
@@ -110,7 +110,7 @@ func main() {
 		folders = subfolders
 	}
 
-	// Set up args struct to pass to run function
+	// Set up args struct to pass to run function.
 	args := args{
 		folders: folders,
 		prompt:  *prompt,
@@ -118,7 +118,7 @@ func main() {
 		recurse: *recurse,
 	}
 
-	// Run the tool for each folder
+	// Run the tool for each folder.
 	err = run(settings, args)
 	if err != nil {
 		fmt.Println("Error running goll: ", err)
@@ -130,16 +130,15 @@ func main() {
 // run function generates a response for each folder in the folders slice.
 func run(settings tool.Settings, args args) error {
 
-	// Create a context
-	// Signal worker is in charge of cancelling the context
+	// Create a context.
+	// Signal worker is in charge of cancelling the context.
 	ctx, cancel := context.WithCancel(context.Background())
-	// Set up signal handling to cancel context on interrupt
-	// sigChannel is closed prior to any exit in order to signal clean up
+	// Set up signal handling to cancel context on interrupt.
+	// sigChannel is closed prior to any exit in order to signal clean up.
 	sigChan := make(chan os.Signal, 1)
 	defer close(sigChan)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-	// Wait for the signal handling goroutine to finish cleaning up
-	// Signal handling goroutine
+	// Signal handling goroutine.
 	go func() {
 		<-sigChan
 		signal.Stop(sigChan)
@@ -147,34 +146,35 @@ func run(settings tool.Settings, args args) error {
 		cancel()
 	}()
 
-	// Start a spinner goroutine
+	// Start a spinner goroutine.
+	// The spinner is started/stopped with a bool via spin channel.
 	spin := make(chan bool)
 	defer close(spin)
 	go spinner(ctx, spin)
 
-	// Loop through each folder and generate a response
+	// Loop through each folder and generate a response.
 	for index, folder := range args.folders {
-		// If firstPrompt is provided, set the prompt text for first folder
-		// Generate will ignore empty prompt text and use prompt.txt file
+		// If firstPrompt is provided, set the prompt text for first folder.
+		// Generate will ignore empty prompt text and use prompt.txt file.
 		var prompt string
 		if index == 0 && args.prompt != "" && !args.recurse {
 			prompt = args.prompt
 		}
 
-		// If we are recursing and prompt is provided, set the prompt text for all folders
-		// Generate will ignore empty prompt text and use prompt.txt file
+		// If we are recursing and prompt is provided, set the prompt text for all folders.
+		// Generate will ignore empty prompt text and use prompt.txt file.
 		if args.recurse && args.prompt != "" {
 			prompt = args.prompt
 		}
 
-		// Set the folder base path
+		// Set the folder base path.
 		folderBase := settings.FolderBase
-		// If we are recursing the full path is already provided
+		// If we are recursing the full path is already provided.
 		if args.recurse {
 			folderBase = ""
 		}
 
-		// Create a new ollama generate instance
+		// Create a new ollama generate instance with options based on settings and args.
 		gen, err := ollama.NewGenerate(
 			folder,
 			ollama.WithPrompt(prompt),
@@ -187,58 +187,58 @@ func run(settings tool.Settings, args args) error {
 			return fmt.Errorf("error creating generate instance: %v", err)
 		}
 
-		// Get the model config
+		// Get the model config.
 		modelConfig := gen.Config()
-		// Pretty print modelConfig
+		// Pretty print modelConfig.
 		modelConfigJSON, err := json.MarshalIndent(modelConfig, "", "  ")
 		if err != nil {
 			return fmt.Errorf("error marshalling modelConfig: %v", err)
 		}
 
-		// Start of output if verbose flag is set
+		// Start of output if verbose flag is set.
 		if args.verbose {
 			fmt.Printf("Generating response using folder: %s\n  With Model Config: %v\n", folder, string(modelConfigJSON))
 		}
 
-		// Start the spinner
+		// Start the spinner.
 		select {
 		case <-ctx.Done():
 			return nil
 		case spin <- true:
 		}
 
-		// Send the request to the ollama generate API with parent context
+		// Send the request to the ollama generate API with parent context.
 		resp, err := gen.Post(ctx)
 		if err != nil {
 			return fmt.Errorf("error generating response: %v", err)
 		}
 
-		// Stop the spinner
+		// Stop the spinner.
 		select {
 		case <-ctx.Done():
 			return nil
 		case spin <- false:
 		}
 
-		// convert evalution time from nanoseconds to seconds as float
+		// Convert evaluation time from nanoseconds to seconds as float.
 		evalTime := float64(resp.EvalDuration) / 1e9
 		// Compute tokens per second
 		tps := float64(resp.EvalCount) / evalTime
 
-		// Print response and basic metrics if verbose flag is set
+		// Print response and basic metrics if verbose flag is set.
 		if args.verbose {
 			fmt.Printf("\n\nResponse: %s", resp.Output)
 			fmt.Printf("\n\nGenerated %d tokens in %.2f seconds", resp.EvalCount, evalTime)
 			fmt.Printf("\nTokens per second: %.2f\n", tps)
 		}
 
-		// If there is a next folder and we are not recursing, write the response to prompt.txt file in the next folder
+		// If there is a next folder and we are not recursing, write the response to prompt.txt file in the next folder.
 		if index < len(args.folders)-1 && !args.recurse {
 			nextFolder := args.folders[index+1]
 			nextFolderPath := filepath.Join(folderBase, nextFolder)
 			nextPromptFilePath := filepath.Join(nextFolderPath, "prompt.txt")
 
-			// Remove content wrapped with <think></think> tags
+			// Remove content wrapped with <think></think> tags for deepseek.
 			re := regexp.MustCompile(`(?s)<think>.*?</think>`)
 			cleanedOutput := re.ReplaceAllString(resp.Output, "")
 
@@ -251,7 +251,7 @@ func run(settings tool.Settings, args args) error {
 			}
 		}
 
-		// Write to output_<date_time>.log file
+		// Write to output_<date_time>.log file.
 		outputLogFileName := fmt.Sprintf("output_%s.log", time.Now().Format("2006-01-02_15-04-05"))
 		outputLogPath := filepath.Join(folderBase, folder, outputLogFileName)
 		outputLog := fmt.Sprintf(

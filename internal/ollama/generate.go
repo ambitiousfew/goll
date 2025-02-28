@@ -47,10 +47,10 @@ type request struct {
 	Model   string       `json:"model"`
 	Options modelOptions `json:"options"`
 	Prompt  string       `json:"prompt"`
-	Stream  bool         `json:"stream"` // set to false since we are not chatting
+	Stream  bool         `json:"stream"` // Set to false since we are not chatting.
 	System  string       `json:"system"`
-	Format  string       `json:"format"` // Not implemented yet
-	Raw     bool         `json:"raw"`    // Not implemented yet
+	Format  string       `json:"format"` // Not implemented yet.
+	Raw     bool         `json:"raw"`    // Not implemented yet.
 }
 
 // Response struct contains the response from ollama.
@@ -79,10 +79,10 @@ type Generate struct {
 	timeout     time.Duration // timeout for the request
 }
 
-// Option is a function that takes a pointer to a Generate struct and modifies it
+// Option is a function that takes a pointer to a Generate struct and modifies it.
 type Option func(*Generate)
 
-// NewGenerate creates a new Generate struct with the given request and options
+// NewGenerate creates a new Generate struct with the given request and options.
 func NewGenerate(folder string, options ...Option) (Generate, error) {
 	g := Generate{
 		folder:      folder,
@@ -102,7 +102,7 @@ func NewGenerate(folder string, options ...Option) (Generate, error) {
 		return g, fmt.Errorf("API base URL is required")
 	}
 
-	// Set the modelConfig from the config.json file
+	// Set the modelConfig from the config.json file.
 	configDirPath := filepath.Join(g.folderBase, g.folder)
 	config, err := config(configDirPath)
 	if err == nil {
@@ -112,63 +112,63 @@ func NewGenerate(folder string, options ...Option) (Generate, error) {
 	return g, nil
 }
 
-// WithPrompt sets the prompt for the Generate struct
+// WithPrompt sets the prompt for the Generate struct.
 func WithPrompt(prompt string) Option {
 	return func(g *Generate) {
 		g.prompt = prompt
 	}
 }
 
-// WithClient sets the HTTP client for the Generate struct
+// WithClient sets the HTTP client for the Generate struct.
 func WithClient(client http.Client) Option {
 	return func(g *Generate) {
 		g.client = client
 	}
 }
 
-// WithAPIBase sets the API base URL for the Generate struct
+// WithAPIBase sets the API base URL for the Generate struct.
 func WithAPIBase(apiBase string) Option {
 	return func(g *Generate) {
 		g.apiBase = apiBase
 	}
 }
 
-// WithFolderBase sets the folder base path for the Generate struct
+// WithFolderBase sets the folder base path for the Generate struct.
 func WithFolderBase(folderBase string) Option {
 	return func(g *Generate) {
 		g.folderBase = folderBase
 	}
 }
 
-// WithTimeout sets the timeout for the Generate struct
+// WithTimeout sets the timeout for the Generate struct.
 func WithTimeout(timeout int) Option {
 	return func(g *Generate) {
 		g.timeout = time.Duration(timeout) * time.Second
 	}
 }
 
-// Config gets the value of modelConfig from the Generate struct
+// Config gets the value of modelConfig from the Generate struct.
 func (g *Generate) Config() ModelConfig {
 	return g.modelConfig
 }
 
-// Prompt gets the value of prompt from the Generate struct
+// Prompt gets the value of prompt from the Generate struct.
 func (g *Generate) Prompt() string {
 	return g.prompt
 }
 
-// requestFromFolder reads config.json, system.txt, and prompt.txt files from the folder and returns a request struct or an error
+// requestFromFolder reads system.txt, and prompt.txt files from the folder and returns a request struct or an error.
 func (g *Generate) requestFromFolder() (request, error) {
 	empty := request{}
 
-	// Read the system.txt file
+	// Read the system.txt file.
 	systemPromptFromFile, err := os.ReadFile(filepath.Join(g.folderBase, g.folder, "system.txt"))
 	if err != nil {
 		return empty, fmt.Errorf("error reading system.txt: %w", err)
 	}
 	systemPromptContent := string(systemPromptFromFile)
 
-	// If we have a prompt, use it. Otherwise, read the prompt.txt file
+	// If we have a prompt, use it. Otherwise, read the prompt.txt file.
 	promptContent := g.prompt
 	if promptContent == "" {
 		promptFromFile, err := os.ReadFile(filepath.Join(g.folderBase, g.folder, "prompt.txt"))
@@ -189,45 +189,45 @@ func (g *Generate) requestFromFolder() (request, error) {
 	}, nil
 }
 
-// Post sends a POST request with context to the Ollama API and returns a Response struct or an error
+// Post sends a POST request with context to the Ollama API and returns a Response struct or an error.
 func (g *Generate) Post(ctx context.Context) (Response, error) {
 	empty := Response{}
-	// Build the request from the folder
+	// Build the request from the folder.
 	req, err := g.requestFromFolder()
 	if err != nil {
 		return empty, fmt.Errorf("error getting request info from folder: %w", err)
 	}
 
-	// Create a new context with a timeout from parent context
+	// Create a new context with a timeout from parent context.
 	requestCtx, cancel := context.WithTimeout(ctx, time.Duration(g.timeout)*time.Second)
 	defer cancel()
 
-	// Marshal the request into JSON
+	// Marshal the request into JSON.
 	reqJSON, err := json.Marshal(req)
 	if err != nil {
 		return empty, fmt.Errorf("error marshalling request: %w", err)
 	}
 
-	// Create a new request with context and JSON body
+	// Create a new request with context and JSON body.
 	request, err := http.NewRequestWithContext(requestCtx, "POST", g.apiBase+"/generate", bytes.NewReader(reqJSON))
 	if err != nil {
 		return empty, fmt.Errorf("error creating POST request: %w", err)
 	}
 	request.Header.Set("Content-Type", "application/json")
 
-	// Send the request
+	// Send the request.
 	resp, err := g.client.Do(request)
 	if err != nil {
 		return empty, fmt.Errorf("error sending POST request: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// Check if the response status code is not 200
+	// Check if the response status code is not 200.
 	if resp.StatusCode != http.StatusOK {
 		return empty, fmt.Errorf("error response status code: %d", resp.StatusCode)
 	}
 
-	// Unmarshal the response body into a Response struct
+	// Unmarshal the response body into a Response struct.
 	response := Response{}
 	err = json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
@@ -237,10 +237,10 @@ func (g *Generate) Post(ctx context.Context) (Response, error) {
 	return response, nil
 }
 
-// config reads the config.json file and returns a modelConfig struct or an error
+// config reads the config.json file and returns a modelConfig struct or an error.
 func config(path string) (ModelConfig, error) {
 	empty := ModelConfig{}
-	// Read the config.json file and unmarshal it into a modelConfig struct
+	// Read the config.json file and unmarshal it into a modelConfig struct.
 	configContent, err := os.ReadFile(filepath.Join(path, "config.json"))
 	if err != nil {
 		return empty, fmt.Errorf("error reading config.json: %w", err)
