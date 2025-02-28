@@ -15,6 +15,7 @@ import (
 // modelOptions struct contains the Ollama options for the model.
 // These are the options that can be set in the config.json file.
 // Only a subset of the options are implemented in this struct since not all models support all options.
+// Avoid omitempty json flags so we do not omit zero value num types that Ollama needs.
 type modelOptions struct {
 	NumCtx        int     `json:"num_ctx"`        // Sets the size of the context window used to generate the next token. (Default: 2048)
 	RepeatLastN   int     `json:"repeat_last_n"`  // Sets how far back for the model to look back to prevent repetition. (Default: 64, 0 = disabled, -1 = num_ctx)
@@ -23,6 +24,7 @@ type modelOptions struct {
 }
 
 // newModelOptions creates a modelOptions struct with default values.
+// Used to set defaults and override with values from config.json.
 func newModelOptions() modelOptions {
 	return modelOptions{
 		NumCtx:        2048,

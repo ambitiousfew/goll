@@ -89,7 +89,7 @@ func main() {
 		}
 	}
 
-	// If recurse flag is set, get all subfolders of the parent folder
+	// If recurse flag is set, get all subfolders of the parent folder to pass as folders
 	if *recurse {
 		parentFolder := filepath.Join(settings.FolderBase, folders[0])
 		var subfolders []string
@@ -110,6 +110,7 @@ func main() {
 		folders = subfolders
 	}
 
+	// Set up args struct to pass to run function
 	args := args{
 		folders: folders,
 		prompt:  *prompt,
@@ -162,12 +163,14 @@ func run(settings tool.Settings, args args) error {
 
 		// If we are recursing and prompt is provided, set the prompt text for all folders
 		// Generate will ignore empty prompt text and use prompt.txt file
-		folderBase := settings.FolderBase
 		if args.recurse && args.prompt != "" {
 			prompt = args.prompt
 		}
+
+		// Set the folder base path
+		folderBase := settings.FolderBase
+		// If we are recursing the full path is already provided
 		if args.recurse {
-			// subfolders will be in the format: folderBase/parentFolder/subfolder
 			folderBase = ""
 		}
 
@@ -184,14 +187,15 @@ func run(settings tool.Settings, args args) error {
 			return fmt.Errorf("error creating generate instance: %v", err)
 		}
 
+		// Get the model config
 		modelConfig := gen.Config()
-
 		// Pretty print modelConfig
 		modelConfigJSON, err := json.MarshalIndent(modelConfig, "", "  ")
 		if err != nil {
 			return fmt.Errorf("error marshalling modelConfig: %v", err)
 		}
 
+		// Start of output if verbose flag is set
 		if args.verbose {
 			fmt.Printf("Generating response using folder: %s\n  With Model Config: %v\n", folder, string(modelConfigJSON))
 		}
@@ -203,7 +207,7 @@ func run(settings tool.Settings, args args) error {
 		case spin <- true:
 		}
 
-		// Send the request to the ollama generate API
+		// Send the request to the ollama generate API with parent context
 		resp, err := gen.Post(ctx)
 		if err != nil {
 			return fmt.Errorf("error generating response: %v", err)
@@ -221,8 +225,8 @@ func run(settings tool.Settings, args args) error {
 		// Compute tokens per second
 		tps := float64(resp.EvalCount) / evalTime
 
+		// Print response and basic metrics if verbose flag is set
 		if args.verbose {
-			// Print the response and metrics
 			fmt.Printf("\n\nResponse: %s", resp.Output)
 			fmt.Printf("\n\nGenerated %d tokens in %.2f seconds", resp.EvalCount, evalTime)
 			fmt.Printf("\nTokens per second: %.2f\n", tps)
@@ -247,7 +251,7 @@ func run(settings tool.Settings, args args) error {
 			}
 		}
 
-		// Write to output_date_time.log file
+		// Write to output_<date_time>.log file
 		outputLogFileName := fmt.Sprintf("output_%s.log", time.Now().Format("2006-01-02_15-04-05"))
 		outputLogPath := filepath.Join(folderBase, folder, outputLogFileName)
 		outputLog := fmt.Sprintf(
@@ -275,7 +279,11 @@ func run(settings tool.Settings, args args) error {
 	return nil
 }
 
-// spinner function prints a spinner while waiting for the response.
+// spinner function prints a spinner to stdout.
+// The spinner is a sequence of characters that are printed in order with a pause via ticker.
+// The spinner is printed to the same line using a carriage return.
+// The spinner is started/stopped with a bool via spin chan.
+// The spinner is stopped when the spin channel is closed or context is cancelled.
 func spinner(ctx context.Context, spin <-chan bool) {
 	tick := time.NewTicker(100 * time.Millisecond)
 	tick.Stop()
