@@ -2,9 +2,9 @@
 
 Goll is a lightweight command-line interface (CLI) that streamlines your interaction with a local Ollama Generate API. With Goll, you can:
 
-* Customize your prompts in one place
-* Easily iterate over multiple prompts to save time and reduce errors
-* Chain multiple prompts for seamless workflow automation
+* Customize your prompts in one place using folder structures.
+* Easily iterate over multiple prompts to save time and reduce errors.
+* Chain multiple prompts for seamless workflow automation.
 
 By automating these common tasks, Goll aims to make your local Ollama CLI experience more efficient and enjoyable.
 
@@ -20,7 +20,7 @@ Yes, naming is hard. `goll` is unique, short and easy to type.
 * Supports simple chaining of multiple prompts.
 * Customize the model for each step in chain.
 * Print and log each response with metrics such as tokens per second.
-* Support for structured/JSON output
+* Support for structured/JSON output.
 
 ## Prereqs
 
@@ -36,7 +36,7 @@ Yes, naming is hard. `goll` is unique, short and easy to type.
    git clone https://github.com/ambitiousfew/goll.git
    cd goll
   ```
-  
+
 2. Build the CLI tool:
 
   ```sh
@@ -50,11 +50,13 @@ Yes, naming is hard. `goll` is unique, short and easy to type.
   ```
 
 * `-f`: Comma-separated list of folder names.  You have to provide at least one folder.
-* `-p`: Optional text prompt.  Applied to first folder in chain or all subfolders if -r is used.  If not present we expect a prompt.txt in first folder of a chain or in all subfolders if -r is used.
-* `-r`: Optional recurse of folder. If used only one folder can be set with -f flag.  Will iterate each subfolder in the given folder.  Only one level supported."
+* `-p`: Optional text prompt.  Applied to first folder in chain, or to all subfolders if -r is used.  If not present we expect a prompt.txt in first folder of a chain, or in all subfolders if -r is used.
+* `-r`: Optional recurse of folder. If used only one folder can be set with -f flag.  No prompt chaining.  Will iterate over each subfolder in the given folder running each prompt.  Only one level supported.
 * `-v`: Optional verbose output. Print results of each step to command line.
 
-### Chaining Example With Prompt Flag
+### Example: Chaining With Prompt
+
+When you want to pass one prompt in and let the pipeline you create pass the output to the next folder as an input prompt.
 
 ```sh
   ./goll -f improve_prompt,basic -p "why is the sky blue"
@@ -63,14 +65,17 @@ Yes, naming is hard. `goll` is unique, short and easy to type.
 * Starts with improving the prompt provided with the `-p` flag and passes the improved prompt to the basic folder.  If we did not use `-p` flag here we would expect prompt.txt in the improve_prompt folder to read "why is the sky blue".
 * Each step will generate an output log with date/time appended.
 
-### Recursion Example
+### Example: Folder Recursion With Verbose output
+
+This is useful for testing combinations of prompts/models/configs in one call.  Or use the `-p` flag to pass the same prompt to each model/config in subfolders.  Set it all up, run it, and go get coffee.
 
 ```sh
-  ./goll -f improve_prompt_test -r -p "why is the sky blue"
+  ./goll -f improve_prompt_test -r -v
 ```
 
-* Iterates over the `improve_prompt_test` folder and calls generate on each subfolder.  If we did not use `-p` flag here we would expect prompt.txt in each subfolder.
-* No chaining supported.
+* Iterates over the `improve_prompt_test` folder and calls generate on each subfolder.  We expect prompt.txt in each subfolder since we did not use `-p` flag to pass in a prompt.
+* No prompt chaining supported.
+* `-v` Will cause verbose output to print on command line.
 * Each step will generate an output log with date/time appended.
 
 ## Configuration
