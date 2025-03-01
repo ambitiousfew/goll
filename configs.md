@@ -7,13 +7,16 @@ When using the Ollama API for running LLMs, tuning parameters like `num_ctx`, `r
 ## 1. `num_ctx` (Context Window)
 
 - **Definition**: The maximum number of tokens the model can consider at a time.  
-- **Default**: Model-dependent (often **4096–8192 tokens**).  
-- **Rule of Thumb**:
+- **Default**: Model-dependent (often **4096–8192 tokens**).
+
+**Rule of Thumb**:
+
 - **For short conversations** → Keep default or **4096 tokens**.
 - **For longer memory retention** → Increase to **8192+ tokens** (if supported).
 - **For performance efficiency** → Use a lower value like **2048–4096** if you don’t need long context.
 
-- **Impact**:
+**Impact**:
+
 - **Higher value** → Better memory but **higher RAM usage**.
 - **Lower value** → More efficient but model may **forget context faster**.
 
@@ -29,13 +32,16 @@ When using the Ollama API for running LLMs, tuning parameters like `num_ctx`, `r
 ## 2. `repeat_last_n` (Lookback Window for Repetition Prevention)
 
 - **Definition**: The number of previous tokens considered for repetition penalties.  
-- **Default**: **64** (or model-dependent).  
-- **Rule of Thumb**:
+- **Default**: **64** (or model-dependent).
+
+**Rule of Thumb**:
+
 - **Short-term coherence** → **32–64** (good balance).
 - **Long-term coherence** → **128–256** (better memory but might lose fluency).
 - **For strict anti-repetition** → **256–512** (higher penalty impact).
 
-- **Impact**:
+**Impact**:
+
 - **Higher values** → Reduces repetition but may **over-penalize** common words, making output unnatural.
 - **Lower values** → More natural output but **risk of loops/repetitions**.
 
@@ -51,14 +57,17 @@ When using the Ollama API for running LLMs, tuning parameters like `num_ctx`, `r
 ## 3. `repeat_penalty` (Repetition Strength)
 
 - **Definition**: Controls how strongly repeated tokens are penalized.  
-- **Default**: **1.1** (common range: **1.0 – 2.0**).  
-- **Rule of Thumb**:
+- **Default**: **1.1** (common range: **1.0 – 2.0**).
+
+**Rule of Thumb**:
+
 - **For balanced output** → **1.05 – 1.15** (default range).
 - **To reduce looping/repetitions** → **1.2 – 1.5**.
 - **For extreme anti-repetition** → **1.5 – 2.0** (may lead to unnatural phrasing).
 - **For creative/storytelling** → **1.0 – 1.05** (allows natural repetition).
 
-- **Impact**:
+**Impact**:
+
 - **Higher penalty** → More diverse output but can **break sentence flow**.
 - **Lower penalty** → More coherent but **risks repetition**.
 
@@ -81,7 +90,7 @@ When using the Ollama API for running LLMs, tuning parameters like `num_ctx`, `r
 | **Code Generation** | 4096 | 64 | 1.0 |
 | **Strict Anti-Repetition (Avoid Loops)** | 4096 | 256 | 1.5 |
 
-## Final Thoughts
+## Basic Process
 
 - **Start with default settings** and adjust based on output quality.  
 - **Increase `num_ctx`** for long conversations but watch **RAM usage**.  
