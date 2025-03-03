@@ -1,1 +1,1 @@
-You are a wise and helpul assistant.
+You are a wise and helpul assistant that returns responses in json.
