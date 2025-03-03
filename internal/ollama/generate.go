@@ -34,11 +34,17 @@ func newModelOptions() modelOptions {
 	}
 }
 
+type outputFormat struct {
+	Type       string         `json:"type"`
+	Properties map[string]any `json:"properties"`
+	Required   []string       `json:"required"`
+}
+
 // ModelConfig struct contains the configuration for the model.
 type ModelConfig struct {
 	Model        string       `json:"model"`
 	Options      modelOptions `json:"options"`
-	OutputFormat string       `json:"format"` // Optional. If this is set to "json" make sure the prompt instructs the agent to ouput json.
+	OutputFormat outputFormat `json:"format"` // Optional. If this is set to "json" make sure the prompt instructs the agent to ouput json.
 }
 
 // Request struct is passed to ollama api to generate a response.
@@ -49,7 +55,7 @@ type request struct {
 	Prompt  string       `json:"prompt"`
 	Stream  bool         `json:"stream"` // Set to false since we are not chatting.
 	System  string       `json:"system"`
-	Format  string       `json:"format"` // Not implemented yet.
+	Format  outputFormat `json:"format"` // Not implemented yet.
 	Raw     bool         `json:"raw"`    // Not implemented yet.
 }
 
@@ -176,6 +182,19 @@ func (g *Generate) requestFromFolder() (request, error) {
 			return empty, fmt.Errorf("error reading prompt.txt: %w", err)
 		}
 		promptContent = string(promptFromFile)
+	}
+
+	// If we have ouput format use it otherwise try to load from format.json.
+	// If file not present just leave it empty.
+	if g.modelConfig.OutputFormat.Properties == nil {
+		formatFromFile, _ := os.ReadFile(filepath.Join(g.folderBase, g.folder, "format.json"))
+		var format outputFormat
+		err := json.Unmarshal(formatFromFile, &format)
+		if err != nil {
+			return empty, fmt.Errorf("error unmarshalling format.json: %w", err)
+		}
+
+		g.modelConfig.OutputFormat = format
 	}
 
 	return request{
