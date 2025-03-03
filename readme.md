@@ -83,8 +83,9 @@ This is useful for testing combinations of prompts/models/configs in one call.  
 Each folder should contain the following files:
 
 * `config.json`: Configuration file for the model.
-* `system.txt`: Sytem prompt.
+* `system.txt`: System prompt.
 * `prompt.txt`: User prompt.
+* `format.json`: Optional. Contains output format schema per Ollama spec in JSON format.
 
 Note:  If chaining, `prompt.txt` is only required for the first folder in chain if you do not use the `-p` flag.  Each step will write to the next folders `prompt.txt` file.  If calling each folder recursively with -r flag then you can either pass the same prompt to each subfolder with the `-p` flag or you need to provide a `prompt.txt` in each subfolder being called.
 
