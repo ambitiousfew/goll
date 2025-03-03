@@ -1,7 +1,7 @@
 {
   "model": "llama3.2",
   "options": {
-    "temperature": 0.8,
+    "temperature": 0.1,
     "num_ctx": 4096
   }
 }

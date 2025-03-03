@@ -188,7 +188,12 @@ func run(settings tool.Settings, args args) error {
 		}
 
 		// Get the model config.
-		modelConfig := gen.Config()
+		modelConfig := gen.ModelConfig
+		// Limit system prompt to first sentence.
+		if len(modelConfig.System) > 80 {
+			modelConfig.System = strings.Split(modelConfig.System, ".")[0] + "..."
+		}
+
 		// Pretty print modelConfig.
 		modelConfigJSON, err := json.MarshalIndent(modelConfig, "", "  ")
 		if err != nil {
@@ -260,7 +265,7 @@ func run(settings tool.Settings, args args) error {
 				"Generated %d tokens in %.2f seconds\n"+
 				"Tokens per second: %.2f\n"+
 				"Using model config: %s\n",
-			gen.Prompt(),
+			gen.Prompt,
 			resp.Output,
 			resp.EvalCount,
 			evalTime,

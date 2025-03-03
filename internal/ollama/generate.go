@@ -12,21 +12,21 @@ import (
 	"time"
 )
 
-// modelOptions struct contains the Ollama options for the model.
+// ModelOptions struct contains the Ollama options for the model.
 // These are the options that can be set in the config.json file.
 // Only a subset of the options are implemented in this struct since not all models support all options.
 // Avoid omitempty json flags so we do not omit zero value num types that Ollama needs.
-type modelOptions struct {
+type ModelOptions struct {
 	NumCtx        int     `json:"num_ctx"`        // Sets the size of the context window used to generate the next token. (Default: 2048)
 	RepeatLastN   int     `json:"repeat_last_n"`  // Sets how far back for the model to look back to prevent repetition. (Default: 64, 0 = disabled, -1 = num_ctx)
 	RepeatPenalty float64 `json:"repeat_penalty"` // Sets how strongly to penalize repetitions. (Default: 1.1)
 	Temperature   float64 `json:"temperature"`    // The temperature of the model. (Default: 0.8)
 }
 
-// newModelOptions creates a modelOptions struct with default values.
+// NewModelOptions creates a modelOptions struct with default values.
 // Used to set defaults and override with values from config.json.
-func newModelOptions() modelOptions {
-	return modelOptions{
+func NewModelOptions() ModelOptions {
+	return ModelOptions{
 		NumCtx:        2048,
 		RepeatLastN:   64,
 		RepeatPenalty: 1.1,
@@ -34,7 +34,8 @@ func newModelOptions() modelOptions {
 	}
 }
 
-type outputFormat struct {
+// OutputFormat struct contains the output format for the model.
+type OutputFormat struct {
 	Type       string         `json:"type"`
 	Properties map[string]any `json:"properties"`
 	Required   []string       `json:"required"`
@@ -43,20 +44,21 @@ type outputFormat struct {
 // ModelConfig struct contains the configuration for the model.
 type ModelConfig struct {
 	Model        string       `json:"model"`
-	Options      modelOptions `json:"options"`
-	OutputFormat outputFormat `json:"format"` // Optional. If this is set to "json" make sure the prompt instructs the agent to ouput json.
+	System       string       `json:"system"`
+	Options      ModelOptions `json:"options"`
+	OutputFormat OutputFormat `json:"format"` // Optional. If this is set to "json" make sure the prompt instructs the agent to ouput json.
 }
 
 // Request struct is passed to ollama api to generate a response.
 // It contains configuration for the model as well as the prompt.
 type request struct {
 	Model   string       `json:"model"`
-	Options modelOptions `json:"options"`
+	Options ModelOptions `json:"options"`
 	Prompt  string       `json:"prompt"`
 	Stream  bool         `json:"stream"` // Set to false since we are not chatting.
 	System  string       `json:"system"`
-	Format  outputFormat `json:"format"` // Not implemented yet.
-	Raw     bool         `json:"raw"`    // Not implemented yet.
+	Format  any          `json:"format"`
+	Raw     bool         `json:"raw"` // Not implemented yet.
 }
 
 // Response struct contains the response from ollama.
@@ -77,8 +79,8 @@ type Response struct {
 // It also contains the HTTP client, API base URL, and folder base path.
 type Generate struct {
 	folder      string        // folder name
-	prompt      string        // optional initial prompt text
-	modelConfig ModelConfig   // model configuration
+	Prompt      string        // optional initial prompt text
+	ModelConfig ModelConfig   // model configuration
 	client      http.Client   // HTTP client
 	apiBase     string        // API base URL
 	folderBase  string        // folder base path
@@ -92,8 +94,8 @@ type Option func(*Generate)
 func NewGenerate(folder string, options ...Option) (Generate, error) {
 	g := Generate{
 		folder:      folder,
-		prompt:      "",
-		modelConfig: ModelConfig{},
+		Prompt:      "",
+		ModelConfig: ModelConfig{},
 		client:      http.Client{},
 		apiBase:     "",
 		folderBase:  "",
@@ -108,12 +110,21 @@ func NewGenerate(folder string, options ...Option) (Generate, error) {
 		return g, fmt.Errorf("API base URL is required")
 	}
 
-	// Set the modelConfig from the config.json file.
-	configDirPath := filepath.Join(g.folderBase, g.folder)
-	config, err := config(configDirPath)
-	if err == nil {
-		g.modelConfig = config
+	// If we have a prompt, use it. Otherwise, read the prompt.txt file.
+	if g.Prompt == "" {
+		promptFromFile, err := os.ReadFile(filepath.Join(g.folderBase, g.folder, "prompt.txt"))
+		if err != nil {
+			return g, fmt.Errorf("error reading prompt.txt: %w", err)
+		}
+		g.Prompt = string(promptFromFile)
 	}
+
+	// Get the model config.
+	config, err := g.config()
+	if err != nil {
+		return g, fmt.Errorf("error getting model config: %w", err)
+	}
+	g.ModelConfig = config
 
 	return g, nil
 }
@@ -121,7 +132,7 @@ func NewGenerate(folder string, options ...Option) (Generate, error) {
 // WithPrompt sets the prompt for the Generate struct.
 func WithPrompt(prompt string) Option {
 	return func(g *Generate) {
-		g.prompt = prompt
+		g.Prompt = prompt
 	}
 }
 
@@ -153,68 +164,67 @@ func WithTimeout(timeout int) Option {
 	}
 }
 
-// Config gets the value of modelConfig from the Generate struct.
-func (g *Generate) Config() ModelConfig {
-	return g.modelConfig
-}
+// config reads the config.json file from the folder and returns a ModelConfig struct or an error.
+func (g *Generate) config() (ModelConfig, error) {
+	// Read the config.json file from the path and unmarshal it into a modelConfig struct.
+	empty := ModelConfig{}
+	configDirPath := filepath.Join(g.folderBase, g.folder)
+	configContent, err := os.ReadFile(filepath.Join(configDirPath, "config.json"))
+	if err != nil {
+		return empty, fmt.Errorf("error reading config.json: %w", err)
+	}
 
-// Prompt gets the value of prompt from the Generate struct.
-func (g *Generate) Prompt() string {
-	return g.prompt
-}
-
-// requestFromFolder reads system.txt, and prompt.txt files from the folder and returns a request struct or an error.
-func (g *Generate) requestFromFolder() (request, error) {
-	empty := request{}
+	config := ModelConfig{Options: NewModelOptions()}
+	err = json.Unmarshal(configContent, &config)
+	if err != nil {
+		return empty, fmt.Errorf("error unmarshalling config.json: %w", err)
+	}
 
 	// Read the system.txt file.
 	systemPromptFromFile, err := os.ReadFile(filepath.Join(g.folderBase, g.folder, "system.txt"))
 	if err != nil {
 		return empty, fmt.Errorf("error reading system.txt: %w", err)
 	}
-	systemPromptContent := string(systemPromptFromFile)
+	config.System = string(systemPromptFromFile)
 
-	// If we have a prompt, use it. Otherwise, read the prompt.txt file.
-	promptContent := g.prompt
-	if promptContent == "" {
-		promptFromFile, err := os.ReadFile(filepath.Join(g.folderBase, g.folder, "prompt.txt"))
-		if err != nil {
-			return empty, fmt.Errorf("error reading prompt.txt: %w", err)
+	// If optional format.json file is present in the folder, use it.
+	if g.ModelConfig.OutputFormat.Type == "" {
+		formatFromFile, err := os.ReadFile(filepath.Join(g.folderBase, g.folder, "format.json"))
+		if err == nil {
+			var format OutputFormat
+			err := json.Unmarshal(formatFromFile, &format)
+			if err != nil {
+				return empty, fmt.Errorf("error unmarshalling format.json: %w", err)
+			}
+			// Set the format in the config.
+			config.OutputFormat = format
 		}
-		promptContent = string(promptFromFile)
 	}
 
-	// If we have ouput format use it otherwise try to load from format.json.
-	// If file not present just leave it empty.
-	if g.modelConfig.OutputFormat.Properties == nil {
-		formatFromFile, _ := os.ReadFile(filepath.Join(g.folderBase, g.folder, "format.json"))
-		var format outputFormat
-		err := json.Unmarshal(formatFromFile, &format)
-		if err != nil {
-			return empty, fmt.Errorf("error unmarshalling format.json: %w", err)
-		}
+	return config, nil
 
-		g.modelConfig.OutputFormat = format
-	}
-
-	return request{
-		Model:   g.modelConfig.Model,
-		Options: g.modelConfig.Options,
-		Prompt:  promptContent,
-		Stream:  false,
-		System:  systemPromptContent,
-		Format:  g.modelConfig.OutputFormat,
-		Raw:     false,
-	}, nil
 }
 
 // Post sends a POST request with context to the Ollama API and returns a Response struct or an error.
 func (g *Generate) Post(ctx context.Context) (Response, error) {
 	empty := Response{}
-	// Build the request from the folder.
-	req, err := g.requestFromFolder()
-	if err != nil {
-		return empty, fmt.Errorf("error getting request info from folder: %w", err)
+
+	var format any
+	if g.ModelConfig.OutputFormat.Type != "" {
+		format = g.ModelConfig.OutputFormat
+	} else {
+		format = ""
+	}
+
+	// Build the request
+	req := request{
+		Model:   g.ModelConfig.Model,
+		Options: g.ModelConfig.Options,
+		Prompt:  g.Prompt,
+		Stream:  false,
+		System:  g.ModelConfig.System,
+		Format:  format,
+		Raw:     false,
 	}
 
 	// Create a new context with a timeout from parent context.
@@ -254,22 +264,4 @@ func (g *Generate) Post(ctx context.Context) (Response, error) {
 	}
 
 	return response, nil
-}
-
-// config reads the config.json file and returns a modelConfig struct or an error.
-func config(path string) (ModelConfig, error) {
-	empty := ModelConfig{}
-	// Read the config.json file and unmarshal it into a modelConfig struct.
-	configContent, err := os.ReadFile(filepath.Join(path, "config.json"))
-	if err != nil {
-		return empty, fmt.Errorf("error reading config.json: %w", err)
-	}
-
-	config := ModelConfig{Options: newModelOptions()}
-	err = json.Unmarshal(configContent, &config)
-	if err != nil {
-		return empty, fmt.Errorf("error unmarshalling config.json: %w", err)
-	}
-
-	return config, nil
 }
